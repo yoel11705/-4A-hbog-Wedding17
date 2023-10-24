@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 class ControladorFormularios
 {
     /*
@@ -7,38 +10,17 @@ class ControladorFormularios
     static public function crtRegistro()
     {
         if (isset($_POST["registerName"])) {
-    
             $tabla = "registros";
-
             $datos = array(
                 "nombre" => $_POST["registerName"],
-                 "email" => $_POST["registerEmail"],
-                "password" => $_POST["registerPassword"]
+                "email" => $_POST["registerEmail"],
+                "password" => password_hash($_POST["registerPassword"], PASSWORD_DEFAULT) // Almacena la contraseña de forma segura
             );
             $respuesta = ModeloFormularios::mdlRegistro($tabla, $datos);
             return $respuesta;
         }
     }
-    /**
-     * Selecion de registros de la tabla
-     */
-    static public function ctrSeleccionarRegistros($item, $valor)
-    {
-        if ($item == null && $valor == null) {
-            $tabla = "registros";
 
-            $respuesta = ModeloFormularios::mdlSeleccionarRegistros($tabla, null, null);
-
-            return $respuesta;
-        } else {
-            $tabla = "registros";
-
-            $respuesta = ModeloFormularios::mdlSeleccionarRegistros($tabla, $item, $valor);
-
-            return $respuesta;
-        }
-
-    }
     /**
      * Ingreso
      */
@@ -52,7 +34,7 @@ class ControladorFormularios
             $respuesta = ModeloFormularios::mdlSeleccionarRegistros($tabla, $item, $valor);
 
             if (is_array($respuesta)) {
-                if ($respuesta["email"] == $_POST["ingresoEmail"] && $respuesta["password"] == $_POST["ingresoPassword"]) {
+                if ($respuesta["email"] == $_POST["ingresoEmail"] && password_verify($_POST["ingresoPassword"], $respuesta["password"])) {
 
                     $_SESSION["validarIngreso"] = "ok";
 
@@ -65,17 +47,12 @@ class ControladorFormularios
                         setTimeout(function(){
                             window.location.href = "index.php?pagina=inicio";
                         }, 500);
-                    </script>';                   
-                     
+                    </script>';
                 } else {
-                    $tabla= "registros";
+                    $tabla = "registros";
 
-                    $intentos_faliidos =$respuesta ["intentos_fallidos"]+1;
-                     $actualizarIntentosFallidos= ModeloFormularios::mdlActualizarIntentosFallidos($tabla, $intentos_faliidos, 
-                        $respuesta["id"]);
-                    echo'<pre>'; print_r($intentos_faliidos); echo'<pre>';
-
-
+                    $intentos_fallidos = $respuesta["intentos_fallidos"] + 1;
+                    $actualizarIntentosFallidos = ModeloFormularios::mdlActualizarIntentosFallidos($tabla, $intentos_fallidos, $respuesta["id"]);
 
                     echo '<script>
                         if (window.history.replaceState){
@@ -90,66 +67,9 @@ class ControladorFormularios
                         window.history.replaceState(null, null, window.location.href);
                     }
                 </script>';
-                echo '<div class="alert alert-danger">Error en el sistema ';
+                echo '<div class="alert alert-danger">Error en el sistema';
             }
-        }
-
-    }
-
-    static public function ctrActualizarRegistro()
-    {
-
-
-        if (isset($_POST["updateName"])) {
-            if ($_POST["updatePassword"] != "") {
-                $password = $_POST["updatePassword"];
-            } else {
-                $password = $_POST["passwordActual"];
-            }
-            $tabla = "registros";
-
-            $datos = array(
-                "id" => $_POST["id"],
-                "nombre" => $_POST["updateName"],
-                "email" => $_POST["updateEmail"],
-                "password" => $password
-            );
-
-            $actualizar = ModeloFormularios::mdlActualizarRegistros($tabla, $datos);
-
-            return $actualizar;
-        }
-
-
-    }
-
-    public function ctrEliminarRegistro()
-{
-    if (isset($_POST["deleteRegistro"])) {
-        $tabla = "registros";
-        $valor = $_POST["deleteRegistro"];
-
-        $respuesta = ModeloFormularios::mdlEliminarRegistro($tabla, $valor);
-
-        if ($respuesta == "ok") {
-            // Redirige después de eliminar
-
-              
-            echo '<script>
-                if (window.history.replaceState){
-                    window.history.replaceState(null, null, window.location.href);
-                }
-                setTimeout(function(){
-                    window.location = "index.php?pagina=invitados";
-                }, 1500);
-            </script>';
         }
     }
 }
-
-    
-
-}
-
 ?>
-

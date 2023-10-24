@@ -34,11 +34,9 @@ class ModeloFormularios
 
                 return $stmt->fetchAll();
             } else {
-                $stmt = $conexion->prepare("SELECT *, DATE_FORMAT(fecha, '%d/%m/%y') as f FROM 
-                $tabla WHERE $item = :$item ORDER BY id DESC");
+                $stmt = $conexion->prepare("SELECT * FROM $tabla WHERE $item = :$item ORDER BY id DESC");
                 $stmt->bindParam(":" . $item, $valor, PDO::PARAM_STR);
                 $stmt->execute();
-
                 return $stmt->fetch();
             }
         } catch (PDOException $e) {
@@ -84,25 +82,30 @@ class ModeloFormularios
         }
     }
 
-//actualizar intentos fallidosa
-        static public function mdlActualizarIntentosFallidos($tabla, $valor, $id){
-        try {
-            $stmt = Conexion::conectar()->prepare("UPDATE $tabla SET intentos_fallidos =: intentos_fallidos WHERE id=:id");
 
 
-            $stmt->bindParam(":intentos_fallidos", $valor, PDO::PARAM_INT);
-            $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
-            if ($stmt->execute()) {
-                return "ok";
-            } else {
-                print_r($stmt->errorInfo());
+    //bloqueo
+    static public function mdlActualizarIntentosFallidos($tabla, $intentos_fallidos, $id)
+{
+    try {
+        $stmt = Conexion::conectar()->prepare("UPDATE $tabla SET intentos_fallidos = :intentos_fallidos WHERE id = :id");
+
+        $stmt->bindParam(":intentos_fallidos", $intentos_fallidos, PDO::PARAM_INT);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            if ($intentos_fallidos >= 3) { 
             }
-        } catch (PDOException $e) {
-            echo "Error: " . $e->getMessage();
+            return "ok";
+        } else {
+            print_r($stmt->errorInfo());
         }
-
+    } catch (PDOException $e) {
+        echo "Error: " . $e->getMessage();
     }
+}
+
 
 }
 ?>
